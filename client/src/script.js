@@ -1,7 +1,7 @@
 class CaptionGenerator {
   constructor() {
     this.initializeEventListeners();
-    this.setupServiceWorker();
+  
   }
 
   initializeEventListeners() {
