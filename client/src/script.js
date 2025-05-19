@@ -5,50 +5,48 @@ class CaptionGenerator {
   }
 
   initializeEventListeners() {
-    // Existing event listeners with enhanced error handling
-    document.getElementById('generatePromo').addEventListener('click', 
-      this.handleGenerateClick.bind(this));
-    
-    // Add input validation for file upload
-    document.getElementById('videoUpload').addEventListener('change', e => {
+    // Video upload handler
+    document.getElementById('videoUpload').addEventListener('change', (e) => {
       const file = e.target.files[0];
-      if (file && !file.type.startsWith('video/')) {
-        this.showError('Please upload a valid video file');
-        e.target.value = '';
+      if (file) {
+        const videoPreview = document.getElementById('videoPreview');
+        videoPreview.src = URL.createObjectURL(file);
       }
     });
-  }
 
-  async handleGenerateClick() {
-    try {
-      this.toggleLoading(true);
-      const { caption, hashtags, subtitles, videoUrl } = await this.processVideo();
-      this.updateUI(caption, hashtags);
-      this.setupDownloads(subtitles, videoUrl);
-    } catch (error) {
-      this.showError(error.message);
-    } finally {
-      this.toggleLoading(false);
-    }
+    // Generate caption handler
+    document.getElementById('generatePromo').addEventListener('click', async () => {
+      try {
+        this.toggleLoading(true);
+        const results = await this.processVideo();
+        this.updateUI(results);
+      } catch (error) {
+        this.showError(error.message);
+      } finally {
+        this.toggleLoading(false);
+      }
+    });
+
+    // Style controls
+    ['fontSelect', 'fontSize', 'fontColor'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        this.updateCaptionStyle();
+      });
+    });
   }
 
   async processVideo() {
     const formData = new FormData();
-    // Add validation and error handling
     const videoFile = document.getElementById('videoUpload').files[0];
-    if (!videoFile) throw new Error('Please select a video file');
+    
+    if (!videoFile) throw new Error('Please upload a video first');
     
     formData.append('video', videoFile);
     formData.append('platform', document.getElementById('platformSelect').value);
-    formData.append('font', document.getElementById('fontSelect').value);
-    formData.append('fontSize', document.getElementById('fontSize').value);
-    formData.append('fontColor', document.getElementById('fontColor').value);
+    formData.append('style', JSON.stringify(this.getCurrentStyle()));
 
     const response = await fetch('/api/process', {
       method: 'POST',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest'
-      },
       body: formData
     });
 
@@ -60,23 +58,75 @@ class CaptionGenerator {
     return response.json();
   }
 
-  // Add other helper methods with error handling
-}
-// script.js
-document.getElementById('videoUpload').addEventListener('change', function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
+  updateCaptionStyle() {
+    const overlay = document.getElementById('captionOverlay');
+    overlay.style.fontFamily = document.getElementById('fontSelect').value;
+    overlay.style.fontSize = `${document.getElementById('fontSize').value}px`;
+    overlay.style.color = document.getElementById('fontColor').value;
+  }
 
-  const videoPreview = document.getElementById('videoPreview');
-  const videoUrl = URL.createObjectURL(file);
-  
-  // Explicitly load video
-  videoPreview.src = videoUrl;
-  videoPreview.load();
-  
-  // Handle autoplay restrictions
-  videoPreview.muted = true;
-  videoPreview.play().catch(error => {
-    console.log('Autoplay blocked:', error);
-  });
-});
+  getCurrentStyle() {
+    return {
+      font: document.getElementById('fontSelect').value,
+      size: document.getElementById('fontSize').value,
+      color: document.getElementById('fontColor').value
+    };
+  }
+
+  updateUI({ caption, hashtags, subtitles, videoUrl }) {
+    document.getElementById('viralCaption').textContent = caption;
+    document.getElementById('hashtagList').textContent = hashtags;
+    document.getElementById('captionOverlay').textContent = caption;
+
+    // Create download links
+    this.createDownloadLink('downloadSubtitles', subtitles, 'subtitles.srt');
+    this.createVideoDownload('downloadWithCaptions', videoUrl);
+  }
+
+  createDownloadLink(buttonId, content, filename) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    
+    document.getElementById(buttonId).onclick = () => {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+    };
+  }
+
+  createVideoDownload(buttonId, videoUrl) {
+    document.getElementById(buttonId).onclick = async () => {
+      try {
+        this.toggleLoading(true);
+        const response = await fetch(videoUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'video_with_captions.mp4';
+        a.click();
+      } catch (error) {
+        this.showError('Failed to download video');
+      } finally {
+        this.toggleLoading(false);
+      }
+    };
+  }
+
+  toggleLoading(show) {
+    document.getElementById('loading').hidden = !show;
+  }
+
+  showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error';
+    errorDiv.textContent = message;
+    document.body.prepend(errorDiv);
+    setTimeout(() => errorDiv.remove(), 5000);
+  }
+}
+
+// Initialize app
+new CaptionGenerator();
