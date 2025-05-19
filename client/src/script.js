@@ -130,3 +130,27 @@ class CaptionGenerator {
 
 // Initialize app
 new CaptionGenerator();
+async function processVideo() {
+  const formData = new FormData();
+  const videoFile = document.getElementById('videoUpload').files[0];
+  
+  formData.append('video', videoFile);
+  formData.append('platform', document.getElementById('platformSelect').value);
+
+  try {
+    const response = await fetch('/api/process', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Processing failed');
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Fetch Error:', error);
+    throw error;
+  }
+}
