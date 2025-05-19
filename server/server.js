@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const { v4: uuidv4 } = require('uuid');
 const apiRouter = require('./routes/api');
 const { cleanupOldFiles } = require('./utils/fileCleaner');
+const api = require('../api/process');
 
 const app = express();
 
