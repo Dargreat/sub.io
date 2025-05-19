@@ -1,17 +1,32 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/process.js", "use": "@vercel/node" },
-    { "src": "server/**/*.js", "use": "@vercel/node" }
+    {
+      "src": "api/process.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "server/routes/api/**/*.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "client/public/**",
+      "use": "@vercel/static"
+    }
   ],
   "routes": [
     {
       "src": "/api/process",
-      "dest": "/api/process.js"
+      "dest": "/api/process.js",
+      "methods": ["POST"]
     },
     {
       "src": "/api/(.*)",
       "dest": "server/routes/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "client/public/$1"
     }
   ]
 }
