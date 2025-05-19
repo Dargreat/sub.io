@@ -6,8 +6,8 @@
       "use": "@vercel/node"
     },
     {
-      "src": "server/routes/api/**/*.js",
-      "use": "@vercel/node"
+      "src": "client/src/**",
+      "use": "@vercel/static"
     },
     {
       "src": "client/public/**",
@@ -16,13 +16,13 @@
   ],
   "routes": [
     {
+      "src": "/src/(.*)",
+      "dest": "client/src/$1"
+    },
+    {
       "src": "/api/process",
       "dest": "/api/process.js",
       "methods": ["POST"]
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "server/routes/api/$1"
     },
     {
       "src": "/(.*)",
