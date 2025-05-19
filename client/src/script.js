@@ -62,3 +62,21 @@ class CaptionGenerator {
 
   // Add other helper methods with error handling
 }
+// script.js
+document.getElementById('videoUpload').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const videoPreview = document.getElementById('videoPreview');
+  const videoUrl = URL.createObjectURL(file);
+  
+  // Explicitly load video
+  videoPreview.src = videoUrl;
+  videoPreview.load();
+  
+  // Handle autoplay restrictions
+  videoPreview.muted = true;
+  videoPreview.play().catch(error => {
+    console.log('Autoplay blocked:', error);
+  });
+});
